@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Audio to Text</title>
+</head>
+<body>
+  <h1>Live Audio to Text</h1>
+  <button id="start-record-btn">Start Recording</button>
+  <button id="stop-record-btn" disabled>Stop Recording</button>
+  <p id="status"></p>
+  <h2>Transcription:</h2>
+  <pre id="transcription"></pre>
+
+  <script>
+    let mediaRecorder;
+    let audioChunks = [];
+
+    document.getElementById('start-record-btn').addEventListener('click', async () => {
+      document.getElementById('status').innerText = "Recording...";
+      document.getElementById('stop-record-btn').disabled = false;
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+
+      mediaRecorder.ondataavailable = event => {
+        audioChunks.push(event.data);
+      };
+
+      mediaRecorder.start();
+    });
+
+    document.getElementById('stop-record-btn').addEventListener('click', () => {
+      document.getElementById('status').innerText = "Stopped recording.";
+      document.getElementById('stop-record-btn').disabled = true;
+
+      mediaRecorder.stop();
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'audio.wav');
+
+        const response = await fetch('/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.json();
+        document.getElementById('transcription').innerText = JSON.stringify(result, null, 2);
+      };
+    });
+  </script>
+</body>
+</html>
