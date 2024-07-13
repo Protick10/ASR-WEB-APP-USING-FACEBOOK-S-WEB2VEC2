@@ -39,6 +39,7 @@
 
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+        audioChunks = [];
         const formData = new FormData();
         formData.append('audio', audioBlob, 'audio.wav');
 
@@ -48,7 +49,7 @@
         });
 
         const result = await response.json();
-        document.getElementById('transcription').innerText = JSON.stringify(result, null, 2);
+        document.getElementById('transcription').innerText = JSON.parse(JSON.stringify(result, null, 2)).text;
       };
     });
   </script>
